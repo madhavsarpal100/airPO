@@ -46,12 +46,14 @@ app.get("/predict/:sid/:aid", function (req, res) {
     sid = req.params.sid
     var from = sid + ".csv";
     var to = "common.csv";
+    
+    //copy details from specific file to common file
     fs.createReadStream(from).pipe(fs.createWriteStream(to));
 
     var aid = req.params.aid;
     const cmd = require("node-cmd");
     if (aid == 1) {
-
+      //use cmd to run script and predict value
         cmd.get(
             'ls',
             function (err, data, stderr) {
@@ -59,7 +61,7 @@ app.get("/predict/:sid/:aid", function (req, res) {
             }
         );
 
-
+  //return value here
 
 
     } else {
