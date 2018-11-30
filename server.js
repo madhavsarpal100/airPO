@@ -39,6 +39,38 @@ app.get('/info/:uid',function(req,res){                  //serving GET req for o
     
 })
 
+
+app.get("/predict/:sid/:aid", function (req, res) {
+
+    console.log("prdect req recieved for " + req.params.sid);
+    sid = req.params.sid
+    var from = sid + ".csv";
+    var to = "common.csv";
+    fs.createReadStream(from).pipe(fs.createWriteStream(to));
+
+    var aid = req.params.aid;
+    const cmd = require("node-cmd");
+    if (aid == 1) {
+
+        cmd.get(
+            'ls',
+            function (err, data, stderr) {
+                console.log('the current dir contains these files :\n\n', data)
+            }
+        );
+
+
+
+
+    } else {
+        res.send({
+            "status": "invalid code",
+            "data": ""
+        })
+    }
+
+})
+
 var idarr = [];                    //array to store initial data about all stations
 var rec_array = [];
 
