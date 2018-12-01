@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        body {
+            background-color: lightblue;
+        }
+        #list{
+            background-color: #BBE6E1;
+        }
+
+    </style>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script>
+        var idarr = [];
+        var finalarr = [];
+        $(function() {
+            $("#getdata").click(function() {
+                $.get("https://api.waqi.info/map/bounds/?latlng=28.4490,76.8228,28.8645,77.2806&token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function(data, status) {
+                    console.log(data.data);
+
+
+                    data.data.forEach(myfunction);
+
+                    function myfunction(value, index, array) {
+                        idarr.push({
+                            "uid": value.uid
+                        });
+                    };
+                    //////
+
+                });
+                document.getElementById("var").innerHTML = "<p>Data recieved Successfully!!</p><br><br><p>Please Click on View Stations to view details</p>"
+            });
+        });
+
+        function showarray() {
+            idarr.forEach(function(value) {
+                console.log(value);
+            })
+        };
+
+        function getstationdata() {
+            document.getElementById("var").innerHTML = "<ul id=\"list\"></ul>";
+            var ul = document.getElementById("list");
+            idarr.forEach(function(obj, no) {
+
+                $.get("https://api.waqi.info/feed/@" + obj.uid + "/?token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function(data, status) {
+                    console.log(data.data.city.name + data.data.time.s);
+                    idarr[no].name = data.data.city.name;
+                    idarr[no].date = data.data.time.s;
+                    var li = document.createElement("li");
+                    li.innerHTML = "Id-" + idarr[no].uid + " ||| " + idarr[no].name + " ||| " + idarr[no].date;
+                    ul.appendChild(li);
+
+                });
+
+            })
+        };
+
+        function refine() {
+            var d = new Date();
+            idarr.forEach(function(obj, no) {
+
+                if (d - Date.parse(obj.date) < 172800000) {
+                    finalarr.push(obj);
+                }
+
+
+            });
+
+            //////
+            document.getElementById("var").innerHTML = "<p>Refined Data :-</p><br><ul id=\"list\"></ul>";
+            var ul = document.getElementById("list");
+            finalarr.forEach(function(obj, no) {
+                var li = document.createElement("li");
+                li.innerHTML = "Id-" + finalarr[no].uid + " ||| " + finalarr[no].name + " ||| " + finalarr[no].date;
+                ul.appendChild(li);
+            });
+        }
+        var obj1;
+
+        
+
+    </script>
+</head>
+
+<body>
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-3 bg-warning">
+               <p>Step 1</p><button id="getdata" type="button" class="btn btn-primary">_request stations_</button><br><br>
+                <!--<button onclick="showarray()" type="button" class="btn btn-success">___show details___</button><br><br>-->
+                <p>Step 2</p><button onclick="getstationdata()" type="button" class="btn btn-success">View Stations</button><br><br>
+                <p>Step 3</p><button onclick="refine()" type="button" class="btn btn-success">___refine data___</button><br><br>
+                <input type="text" id="inly" placeholder="Enter Id"><br><br>
+
+               <p>Step 4</p> <button onclick="action()" type="button" class="btn btn-success">_Req Stn Data__</button>
+               <br>
+               <br>
+               <br>
+            </div>
+            <div class="col">
+                <br><br>
+                <div id="var" >
+                <div style="text-align:center;">
+                <img src="chim.gif" alt="" align="middle">
+                <p>..........Minor Project.......</p>
+                <p>Real time ambient Air Quality Analysis</p>
+                <p>Mentor - Ms Deepika Kumar</p>
+                <br><br>
+                <p>Click on request station data!!</p>
+                    </div>
+
+                </div>
+                <div><img id="qa"></div>
+
+
+            </div>
+
+        </div>
+
+</body>
+
+</html>
