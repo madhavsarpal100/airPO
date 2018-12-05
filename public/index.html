@@ -87,7 +87,69 @@
         }
         var obj1;
 
-        
+        function action() {
+
+            var stnno = document.getElementById("inly").value;
+
+            $.get("/info/" + stnno, function(data, staus) {
+                console.log(data);
+
+                document.getElementById("var").innerHTML = "<p>Station Data for Id " + stnno + " :-</p><br><ul id=\"list\"></ul>";
+
+
+                var ul = document.getElementById("list");
+                var a = document.createElement("li");
+                a.innerHTML = "AQI  :" + (data.aqi == -1 ? "Null" : data.aqi);
+                var b = document.createElement("li");
+                b.innerHTML = "DOMINANT  :" + (data.dom == -1 ? "Null" : data.dom);
+                var c = document.createElement("li");
+                c.innerHTML = "CO  :" + (data.co == -1 ? "Null" : data.co);
+                var d = document.createElement("li");
+                d.innerHTML = "NO2  :" + (data.no2 == -1 ? "Null" : data.no2);
+                var e = document.createElement("li");
+                e.innerHTML = "SO2  :" + (data.so2 == -1 ? "Null" : data.so2);
+                var f = document.createElement("li");
+                f.innerHTML = "PM10  :" + (data.pm10 == -1 ? "Null" : data.pm10);
+                var g = document.createElement("li");
+                g.innerHTML = "PM2.5  :" + (data.pm25 == -1 ? "Null" : data.pm25);
+                var h = document.createElement("li");
+                h.innerHTML = "o3  :" + (data.o3 == -1 ? "Null" : data.o3);
+                var t = document.createElement("br");
+                var i = document.createElement("li");
+                i.innerHTML = "Last Updated  : " + data.hour + ":" + data.min + " hours";
+                var j = document.createElement("li");
+                j.setAttribute("class","font-weight-bold");
+                j.innerHTML = "Prediction,next Hour : "+Math.floor(data.pre);
+                var k = document.createElement("li");
+                k.innerHTML = "Advice : Coming Soon";
+
+
+
+
+                ul.appendChild(a);
+                ul.appendChild(b);
+                ul.appendChild(c);
+                ul.appendChild(d);
+                ul.appendChild(e);
+                ul.appendChild(f);
+                ul.appendChild(g);
+                ul.appendChild(h);
+                ul.appendChild(t);
+                ul.appendChild(i);
+                ul.appendChild(j);
+                ul.appendChild(k);
+               // document.getElementById("qa").setAttribute("src","..\line_chart.jpg")
+                
+                var img = new Image();
+               img.src = "/graph";
+                ul.appendChild(img);
+
+            })
+
+
+
+
+        }
 
     </script>
 </head>
