@@ -2,58 +2,34 @@ const express = require("express");
 const https = require("https");
 const fs = require("fs");
 const chalk = require("chalk");
-const bodyparser=require("body-parser");
+const bodyparser = require("body-parser");
+const nrc = require("node-run-cmd");
+const path=require("path");
 
 const app = express();
 
 app.use(express.static("public"));
-app.use(bodyparser.urlencoded({extended:false}));
+app.use(bodyparser.urlencoded({
+    extended: false
+}));
 //const info=require("./info.js");
 
 //app.get("/predict",require("./predict.js"));
-
-app.get('/info/:uid',function(req,res){                  //serving GET req for one particular station data
-    console.log(req.params.uid);
-    
-    var contents = fs.readFileSync(req.params.uid+".csv", 'utf8');
-
-    console.log(contents.split("\n").reverse());
-    var datarr=contents.split("\n").reverse()[1].split(",");
-    console.log(datarr);
-    contents = fs.readFileSync("attr.csv", 'utf8');
-    var headarr=contents.split("\n")[0].split(",")
-    var myobj={};
-    headarr.forEach(function(ele,no){
-        console.log("no is "+no+"and ele is "+ele)
-        myobj[""+ele]=datarr[no];
-    });
-    console.log(myobj);
-    
-    
-    
-    
-    
-    
-    
-    res.send(myobj);
-    
+app.get("/graph", function (req, res) {
+    res.sendFile(path.resolve(path.resolve(__dirname+"/line_chart.jpg")));
 })
-
-
 app.get("/predict/:sid/:aid", function (req, res) {
 
     console.log("prdect req recieved for " + req.params.sid);
     sid = req.params.sid
     var from = sid + ".csv";
     var to = "common.csv";
-    
-    //copy details from specific file to common file
     fs.createReadStream(from).pipe(fs.createWriteStream(to));
 
     var aid = req.params.aid;
     const cmd = require("node-cmd");
     if (aid == 1) {
-      //use cmd to run script and predict value
+
         cmd.get(
             'ls',
             function (err, data, stderr) {
@@ -61,7 +37,9 @@ app.get("/predict/:sid/:aid", function (req, res) {
             }
         );
 
-  //return value here
+
+
+
 
 
     } else {
@@ -73,25 +51,66 @@ app.get("/predict/:sid/:aid", function (req, res) {
 
 })
 
-var idarr = [];                    //array to store initial data about all stations
+
+app.get('/info/:uid', function (req, res) {
+    console.log(req.params.uid);
+
+    var contents = fs.readFileSync(req.params.uid + ".csv", 'utf8');
+
+    console.log(contents.split("\n").reverse());
+    var datarr = contents.split("\n").reverse()[1].split(",");
+    console.log(datarr);
+    fs.writeFile("now.csv", "time,aqi\n", function (err) {
+        if (err) {
+            return console.log(err);
+        }
+
+        console.log("Data for now file updated successfully!");
+    });
+    for (var i = 1; i <= 10; i++) {
+        var datarr = contents.split("\n").reverse()[11 - i].split(",");
+        stra = "" + datarr[12] + "," + datarr[0] + "\n";
+        fs.appendFile("now.csv", stra, function (err) {
+            if (err) {
+                return console.log(err);
+            }
+
+            console.log("Data for now file updated successfully!");
+        });
+
+    }
+    contents = fs.readFileSync("attr.csv", 'utf8');
+    var headarr = contents.split("\n")[0].split(",")
+    var myobj = {};
+    headarr.forEach(function (ele, no) {
+        console.log("no is " + no + "and ele is " + ele)
+        myobj["" + ele] = datarr[no];
+
+    });
+    myobj["pre"] = myobj["aqi"] * 1.07;
+    console.log(myobj);
+    nrc.run('Rscript a.R>td.txt');
+    nrc.run('Rscript pred.R>tdi.txt');
+
+    res.send(myobj);
+
+})
+
+var idarr = [];
 var rec_array = [];
 
+function initiate() {
 
-function initiate() {                     //initiate the csv file which stores attribute names
-    var head="aqi,dom,co,no2,so2,o3,pm25,pm10,w,year,month,day,hour,min,sec\n"
-    fs.appendFile("attr.csv",head, function (err) {
-                    if (err) {
-                        return console.log(err);
-                    }
 
-                    console.log("Data for header attributes updated successfully!");
-                });
+    var head = "aqi,dom,co,no2,so2,o3,pm25,pm10,w,year,month,day,hour,min,sec\n"
+    fs.appendFile("attr.csv", head, function (err) {
+        if (err) {
+            return console.log(err);
+        }
 
-    
-    //latitude and longitude codes hardcoded for delhi city
-    
-    // token id hard coded..should be in config file
-    
+        console.log("Data for header attributes updated successfully!");
+    });
+
     https.get("https://api.waqi.info/map/bounds/?latlng=28.4490,76.8228,28.8645,77.2806&token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function (res) {
 
         res.on("data", function (chunk) {
@@ -102,13 +121,12 @@ function initiate() {                     //initiate the csv file which stores a
             }
             console.log(idarr);
             console.log("initiate done");
+           
 
         })
 
     })
 };
-//
-//function refresh runs periodically and stores data
 
 function refresh() {
     console.log("Updating Data...");
@@ -119,8 +137,6 @@ function refresh() {
             res.on("data", function (chunk) {
                 var data = JSON.parse(chunk).data;
                 var timestr = data.time.s;
-                
-                //extracting min, sec etc from time in string format
                 var year = timestr.substr(0, 4);
                 var month = timestr.substr(5, 2);
                 var day = timestr.substr(8, 2);
@@ -142,8 +158,6 @@ function refresh() {
                     "w": (adata.w ? adata.w.v : -1)
                 }
                 str = m.aqi + "," + m.dom + "," + m.co + "," + m.no2 + "," + m.so2 + "," + m.o3 + "," + m.pm25 + "," + m.pm10 + "," + m.w + "," + year + "," + month + "," + day + "," + hour + "," + min + "," + sec + "\n";
-                
-                //now append this str data to csv file for that particular station
                 fs.appendFile(ele + ".csv", str, function (err) {
                     if (err) {
                         return console.log(err);
@@ -165,17 +179,14 @@ function refresh() {
     });
 }
 
-// interval in startnow..to be decided
-
-function startnow(){setInterval(refresh, 60*60*1000);
-                   console.log("interval set");};
+function startnow() {
+    setInterval(refresh, 20 * 60 * 1000);
+    console.log("interval set");
+};
 
 
 app.listen(1234, () => {
     console.log("server started");
     initiate();
-    
-    //set timout should be replaced
-    //invoke startnow when initiate finishes
     setTimeout(startnow, 5000);
 });
