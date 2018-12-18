@@ -1,10 +1,12 @@
 const express = require("express");
 const https = require("https");
+const http = require("http");
 const fs = require("fs");
 const chalk = require("chalk");
 const bodyparser = require("body-parser");
 const nrc = require("node-run-cmd");
-const path=require("path");
+const path = require("path");
+var Request = require("request");
 
 const app = express();
 
@@ -16,7 +18,7 @@ app.use(bodyparser.urlencoded({
 
 //app.get("/predict",require("./predict.js"));
 app.get("/graph", function (req, res) {
-    res.sendFile(path.resolve(path.resolve(__dirname+"/line_chart.jpg")));
+    res.sendFile(path.resolve(path.resolve(__dirname + "/line_chart.jpg")));
 })
 app.get("/predict/:sid/:aid", function (req, res) {
 
@@ -114,14 +116,21 @@ function initiate() {
     https.get("https://api.waqi.info/map/bounds/?latlng=28.4490,76.8228,28.8645,77.2806&token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function (res) {
 
         res.on("data", function (chunk) {
+
+
             var data = JSON.parse(chunk).data;
-            console.log(data.length);
-            for (i = 0; i < data.length; i++) {
-                idarr.push(data[i].uid);
-            }
-            console.log(idarr);
-            console.log("initiate done");
            
+            for (i = 0; i < data.length; i++) {
+                var obje = {
+                    "uid": data[i].uid,
+                    "lat": data[i].lat,
+                    "lon": data[i].lon
+                };
+                idarr.push(obje);
+            }
+           
+            console.log("initiate done");
+
 
         })
 
@@ -130,12 +139,21 @@ function initiate() {
 
 function refresh() {
     console.log("Updating Data...");
-    idarr.forEach(function (ele) {
-        console.log(" Requesting Data for station" + ele);
-        https.get("https://api.waqi.info/feed/@" + ele + "/?token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function (res) {
+    idarr.forEach(function (ele, index) {
+        console.log(" Requesting Data for station" + ele.uid);
+        https.get("https://api.waqi.info/feed/@" + ele.uid + "/?token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function (res) {
 
             res.on("data", function (chunk) {
-                var data = JSON.parse(chunk).data;
+                
+                
+                var tempob={};
+                Request.get("https://api.darksky.net/forecast/a8bd8a1bc8307e92ef4d57ecb18b87bd/" + ele.lat + "," + ele.lon, (error, response, body) => {
+                    if (error) {
+                        return console.dir(error);
+                    }
+                    tempob=JSON.parse(body).currently;
+                    
+                    var data = JSON.parse(chunk).data;
                 var timestr = data.time.s;
                 var year = timestr.substr(0, 4);
                 var month = timestr.substr(5, 2);
@@ -155,16 +173,23 @@ function refresh() {
                     "o3": (adata.o3 ? adata.o3.v : -1),
                     "pm25": (adata.pm25 ? adata.pm25.v : -1),
                     "pm10": (adata.pm10 ? adata.pm10.v : -1),
-                    "w": (adata.w ? adata.w.v : -1)
+                    "w": (adata.w ? adata.w.v : -1),
+                    "temp":tempob.temperature,
+                    "humi":tempob.humidity,
+                    "wspeed":tempob.windSpeed
                 }
-                str = m.aqi + "," + m.dom + "," + m.co + "," + m.no2 + "," + m.so2 + "," + m.o3 + "," + m.pm25 + "," + m.pm10 + "," + m.w + "," + year + "," + month + "," + day + "," + hour + "," + min + "," + sec + "\n";
-                fs.appendFile(ele + ".csv", str, function (err) {
+                str = m.aqi + "," + m.dom + "," + m.co + "," + m.no2 + "," + m.so2 + "," + m.o3 + "," + m.pm25 + "," + m.pm10 + "," + m.w + "," + year + "," + month + "," + day + "," + hour + "," + min + "," + sec + ","+m.temp+","+m.humi+","+m.wspeed+"\n";
+                fs.appendFile(ele.uid + ".csv", str, function (err) {
                     if (err) {
                         return console.log(err);
                     }
 
-                    console.log("Data for station " + ele + " updated successfully!");
+                    console.log("Data for station " + ele.uid + " updated successfully!");
                 });
+                    
+                });
+
+                
 
 
 
@@ -180,7 +205,7 @@ function refresh() {
 }
 
 function startnow() {
-    setInterval(refresh, 20 * 60 * 1000);
+    setInterval(refresh, 30 * 1000);
     console.log("interval set");
 };
 
