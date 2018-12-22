@@ -139,6 +139,8 @@ function refresh() {
 
             res.on("data", function (chunk) {
 
+                
+                //darksky weather api--max 1000 hits per day
 
                 var tempob = {};
                 Request.get("https://api.darksky.net/forecast/a8bd8a1bc8307e92ef4d57ecb18b87bd/" + ele.lat + "," + ele.lon, (error, response, body) => {
