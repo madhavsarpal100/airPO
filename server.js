@@ -39,18 +39,12 @@ app.get("/predict/:sid/:aid", function (req, res) {
             }
         );
 
-
-
-
-
-
     } else {
         res.send({
             "status": "invalid code",
             "data": ""
         })
     }
-
 })
 
 
@@ -119,7 +113,7 @@ function initiate() {
 
 
             var data = JSON.parse(chunk).data;
-           
+
             for (i = 0; i < data.length; i++) {
                 var obje = {
                     "uid": data[i].uid,
@@ -128,7 +122,7 @@ function initiate() {
                 };
                 idarr.push(obje);
             }
-           
+
             console.log("initiate done");
 
 
@@ -144,52 +138,52 @@ function refresh() {
         https.get("https://api.waqi.info/feed/@" + ele.uid + "/?token=a9859ba99c240b8b0bd2718664a75dede866cdf7", function (res) {
 
             res.on("data", function (chunk) {
-                
-                
-                var tempob={};
+
+
+                var tempob = {};
                 Request.get("https://api.darksky.net/forecast/a8bd8a1bc8307e92ef4d57ecb18b87bd/" + ele.lat + "," + ele.lon, (error, response, body) => {
                     if (error) {
                         return console.dir(error);
                     }
-                    tempob=JSON.parse(body).currently;
-                    
+                    tempob = JSON.parse(body).currently;
+
                     var data = JSON.parse(chunk).data;
-                var timestr = data.time.s;
-                var year = timestr.substr(0, 4);
-                var month = timestr.substr(5, 2);
-                var day = timestr.substr(8, 2);
-                var hour = timestr.substr(11, 2);
-                var min = timestr.substr(14, 2);
-                var sec = timestr.substr(17, 2);
-                adata = data.iaqi;
+                    var timestr = data.time.s;
+                    var year = timestr.substr(0, 4);
+                    var month = timestr.substr(5, 2);
+                    var day = timestr.substr(8, 2);
+                    var hour = timestr.substr(11, 2);
+                    var min = timestr.substr(14, 2);
+                    var sec = timestr.substr(17, 2);
+                    adata = data.iaqi;
 
 
-                m = {
-                    "aqi": (data.aqi ? data.aqi : -1),
-                    "dom": (data.dominentpol ? data.dominentpol : -1),
-                    "co": (adata.co ? adata.co.v : -1),
-                    "no2": (adata.no2 ? adata.no2.v : -1),
-                    "so2": (adata.so2 ? adata.so2.v : -1),
-                    "o3": (adata.o3 ? adata.o3.v : -1),
-                    "pm25": (adata.pm25 ? adata.pm25.v : -1),
-                    "pm10": (adata.pm10 ? adata.pm10.v : -1),
-                    "w": (adata.w ? adata.w.v : -1),
-                    "temp":tempob.temperature,
-                    "humi":tempob.humidity,
-                    "wspeed":tempob.windSpeed
-                }
-                str = m.aqi + "," + m.dom + "," + m.co + "," + m.no2 + "," + m.so2 + "," + m.o3 + "," + m.pm25 + "," + m.pm10 + "," + m.w + "," + year + "," + month + "," + day + "," + hour + "," + min + "," + sec + ","+m.temp+","+m.humi+","+m.wspeed+"\n";
-                fs.appendFile(ele.uid + ".csv", str, function (err) {
-                    if (err) {
-                        return console.log(err);
+                    m = {
+                        "aqi": (data.aqi ? data.aqi : -1),
+                        "dom": (data.dominentpol ? data.dominentpol : -1),
+                        "co": (adata.co ? adata.co.v : -1),
+                        "no2": (adata.no2 ? adata.no2.v : -1),
+                        "so2": (adata.so2 ? adata.so2.v : -1),
+                        "o3": (adata.o3 ? adata.o3.v : -1),
+                        "pm25": (adata.pm25 ? adata.pm25.v : -1),
+                        "pm10": (adata.pm10 ? adata.pm10.v : -1),
+                        "w": (adata.w ? adata.w.v : -1),
+                        "temp": tempob.temperature,
+                        "humi": tempob.humidity,
+                        "wspeed": tempob.windSpeed
                     }
+                    str = m.aqi + "," + m.dom + "," + m.co + "," + m.no2 + "," + m.so2 + "," + m.o3 + "," + m.pm25 + "," + m.pm10 + "," + m.w + "," + year + "," + month + "," + day + "," + hour + "," + min + "," + sec + "," + m.temp + "," + m.humi + "," + m.wspeed + "\n";
+                    fs.appendFile(ele.uid + ".csv", str, function (err) {
+                        if (err) {
+                            return console.log(err);
+                        }
 
-                    console.log("Data for station " + ele.uid + " updated successfully!");
-                });
-                    
+                        console.log("Data for station " + ele.uid + " updated successfully!");
+                    });
+
                 });
 
-                
+
 
 
 
@@ -205,7 +199,8 @@ function refresh() {
 }
 
 function startnow() {
-    setInterval(refresh, 30 * 1000);
+    setTimeout(refresh,10*1000);
+    setInterval(refresh, 60*60 * 1000);
     console.log("interval set");
 };
 
