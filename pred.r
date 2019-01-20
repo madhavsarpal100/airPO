@@ -11,3 +11,15 @@
 # Save the file.
 #dev.off()
 
+#
+
+#########################################
+
+########################
+dat<-read.csv("now.csv")
+df<-data.frame(dat)
+datamod<-lm(nextaqi~polym(time+temp+humi+wind+aqi,degree=5,raw=TRUE),data=df)
+predict(datamod,read.csv(ins))
+
+
+
